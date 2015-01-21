@@ -956,7 +956,7 @@ class Template(object):
         t._module = None
         # debug and loader helpers
         t._debug_info = namespace['debug_info']
-        pprint.pprint(namespace)
+        #log.trace(pprint.pformat(namespace))
         t._uptodate = None
 
         # store the reference
