@@ -31,7 +31,9 @@ from jinja2._compat import imap, ifilter, string_types, iteritems, \
      text_type, reraise, implements_iterator, implements_to_string, \
      get_next, encode_filename, PY2, PYPY
 from functools import reduce
-
+import pprint
+import logging 
+log = logging.getLogger(__name__)
 
 # for direct template usage we have up to ten living environments
 _spontaneous_environments = LRUCache(10)
@@ -949,13 +951,12 @@ class Template(object):
         t.name = namespace['name']
         t.filename = namespace['__file__']
         t.blocks = namespace['blocks']
-
         # render function and module
         t.root_render_func = namespace['root']
         t._module = None
-
         # debug and loader helpers
         t._debug_info = namespace['debug_info']
+        pprint.pprint(namespace)
         t._uptodate = None
 
         # store the reference
@@ -976,7 +977,16 @@ class Template(object):
         """
         vars = dict(*args, **kwargs)
         #try:
-        return concat(self.root_render_func(self.new_context(vars)))
+        log.debug("Vars {0}".format(vars))
+        f = self.root_render_func
+        log.debug("func {0}".format(f))
+        c= self.new_context(vars)
+        log.debug("Context {0}".format(c))
+        v = f(c)
+        log.debug("Val {0}".format(v))
+        #import pdb; pdb.set_trace();
+
+        return concat(v)
         #except Exception:
         #    exc_info = sys.exc_info()
         #return self.environment.handle_exception(exc_info, True)

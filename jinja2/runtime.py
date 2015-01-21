@@ -18,7 +18,9 @@ from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
 from jinja2._compat import imap, text_type, iteritems, \
      implements_iterator, implements_to_string, string_types, PY2
-
+import pprint
+import logging 
+log = logging.getLogger(__name__)
 
 # these variables are exported to the template runtime
 __all__ = ['LoopContext', 'TemplateReference', 'Macro', 'Markup',
@@ -149,10 +151,12 @@ class Context(object):
         """Looks up a variable like `__getitem__` or `get` but returns an
         :class:`Undefined` object with the name of the name looked up.
         """
+        log.debug("resolve:{0}".format(key))
         if key in self.vars:
             return self.vars[key]
         if key in self.parent:
             return self.parent[key]
+        
         return self.environment.undefined(name=key)
 
     def get_exported(self):
@@ -172,6 +176,9 @@ class Context(object):
         argument if the callable is a :func:`contextfunction` or
         :func:`environmentfunction`.
         """
+        if isinstance(__obj, Undefined):
+            raise Exception("Undefined called")
+
         if __debug__:
             __traceback_hide__ = True  # noqa
 
@@ -184,6 +191,7 @@ class Context(object):
                 __obj = fn
                 break
 
+
         if isinstance(__obj, _context_function_types):
             if getattr(__obj, 'contextfunction', 0):
                 args = (__self,) + args
@@ -192,6 +200,9 @@ class Context(object):
             elif getattr(__obj, 'environmentfunction', 0):
                 args = (__self.environment,) + args
         try:
+            log.debug("Args {0}".format(pprint.pformat(args)))
+            log.debug("KWArgs {0}".format(pprint.pformat(kwargs)))
+            log.debug("__obj {0}".format(pprint.pformat(__obj)))
             return __obj(*args, **kwargs)
         except StopIteration:
             return __self.environment.undefined('value was undefined because '
@@ -470,6 +481,8 @@ class Undefined(object):
         """Regular callback function for undefined objects that raises an
         `UndefinedError` on call.
         """
+        #import pdb; pdb.set_trace();
+        #raise Exception("missing")
         if self._undefined_hint is None:
             if self._undefined_obj is missing:
                 hint = '%r is undefined' % self._undefined_name
@@ -489,6 +502,7 @@ class Undefined(object):
 
     @internalcode
     def __getattr__(self, name):
+        log.debug("get {0}".format(name))
         if name[:2] == '__':
             raise AttributeError(name)
         return self._fail_with_undefined_error()
